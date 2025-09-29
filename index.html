@@ -89,18 +89,22 @@ button {
 </div>
 
 <script>
-const SECRET = "MYSECRET123"; // Shared with Roblox
-let num1, num2, correctAnswer;
+<script>
+const SECRET = "MYSECRET123";
 const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-function simpleHash(str) {
-    let hash = 0;
+function generateCode(str) {
+    const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let code = "";
+    let sum = 0;
     for (let i = 0; i < str.length; i++) {
-        hash = (hash << 5) - hash + str.charCodeAt(i);
-        hash |= 0;
+        sum += str.charCodeAt(i);
+        code += chars[sum % 36];
     }
-    return Math.abs(hash).toString(36).toUpperCase().substring(0, 8);
+    return code.substring(0, 8);
 }
+
+let num1, num2, correctAnswer;
 
 function generateCaptcha() {
     num1 = Math.floor(Math.random() * 10) + 1;
@@ -114,42 +118,40 @@ function generateCaptcha() {
 function verifyAnswer() {
     const userAnswer = parseInt(document.getElementById('answerInput').value);
     if (userAnswer === correctAnswer) {
-        showToast('Verification successful!', 'success');
-        generateCode();
+        showToast("Verification successful!", "success");
+        const code = generateCode(SECRET + today);
+        document.getElementById("generatedCode").textContent = code;
+        document.getElementById("verificationSection").classList.add("hidden");
+        document.getElementById("resultSection").classList.remove("hidden");
     } else {
-        showToast('Incorrect answer. Try again!', 'error');
+        showToast("Incorrect answer. Try again!", "error");
         generateCaptcha();
     }
 }
 
-function generateCode() {
-    const code = simpleHash(SECRET + today);
-    document.getElementById('generatedCode').textContent = code;
-    document.getElementById('verificationSection').classList.add('hidden');
-    document.getElementById('resultSection').classList.remove('hidden');
-}
-
 function resetVerification() {
-    document.getElementById('verificationSection').classList.remove('hidden');
-    document.getElementById('resultSection').classList.add('hidden');
+    document.getElementById("verificationSection").classList.remove("hidden");
+    document.getElementById("resultSection").classList.add("hidden");
     generateCaptcha();
 }
 
 function refreshCaptcha() { generateCaptcha(); }
 
 function showToast(message, type) {
-    const toast = document.createElement('div');
+    const toast = document.createElement("div");
     toast.className = `toast ${type}`;
     toast.textContent = message;
     document.body.appendChild(toast);
     setTimeout(() => toast.remove(), 3000);
 }
 
-document.getElementById('answerInput').addEventListener('keypress', function(e){
-    if (e.key === 'Enter') verifyAnswer();
+document.getElementById("answerInput").addEventListener("keypress", e => {
+    if (e.key === "Enter") verifyAnswer();
 });
 
 generateCaptcha();
+</script>
+
 </script>
 </body>
 </html>
