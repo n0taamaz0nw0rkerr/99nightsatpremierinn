@@ -243,103 +243,68 @@
     </div>
 
     <script>
-        let num1, num2, correctAnswer;
+    const SECRET = "MYSECRET123"; // shared with Roblox
+    const today = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
 
-        // Generate captcha
-        function generateCaptcha() {
-            num1 = Math.floor(Math.random() * 10) + 1;
-            num2 = Math.floor(Math.random() * 10) + 1;
-            correctAnswer = num1 + num2;
-            
-            document.getElementById('num1').textContent = num1;
-            document.getElementById('num2').textContent = num2;
-            document.getElementById('answerInput').value = '';
+    // Simple hash function (not cryptographically strong but works for this)
+    function simpleHash(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+            hash = (hash << 5) - hash + str.charCodeAt(i);
+            hash |= 0; // convert to 32bit integer
         }
+        return Math.abs(hash).toString(36).toUpperCase().substring(0, 8);
+    }
 
-        // Refresh captcha
-        function refreshCaptcha() {
+    // Generate captcha
+    function generateCaptcha() {
+        num1 = Math.floor(Math.random() * 10) + 1;
+        num2 = Math.floor(Math.random() * 10) + 1;
+        correctAnswer = num1 + num2;
+        
+        document.getElementById('num1').textContent = num1;
+        document.getElementById('num2').textContent = num2;
+        document.getElementById('answerInput').value = '';
+    }
+
+    function verifyAnswer() {
+        const userAnswer = parseInt(document.getElementById('answerInput').value);
+        if (userAnswer === correctAnswer) {
+            showToast('Verification successful!', 'success');
+            generateCode();
+        } else {
+            showToast('Incorrect answer. Try again!', 'error');
             generateCaptcha();
         }
+    }
 
-        // Show toast notification
-        function showToast(message, type) {
-            const toast = document.createElement('div');
-            toast.className = `toast ${type}`;
-            toast.textContent = message;
-            document.body.appendChild(toast);
-            
-            setTimeout(() => {
-                toast.remove();
-            }, 3000);
-        }
+    function generateCode() {
+        const code = simpleHash(SECRET + today);
+        document.getElementById('generatedCode').textContent = code;
+        document.getElementById('verificationSection').classList.add('hidden');
+        document.getElementById('resultSection').classList.remove('hidden');
+    }
 
-        // Verify answer
-        function verifyAnswer() {
-            const userAnswer = parseInt(document.getElementById('answerInput').value);
-            
-            if (userAnswer === correctAnswer) {
-                showToast('Verification successful!', 'success');
-                generateCode();
-            } else {
-                showToast('Incorrect answer. Try again!', 'error');
-                generateCaptcha();
-            }
-        }
-
-        // Generate random code
-        function generateCode() {
-            const code = Math.random().toString(36).substring(2, 15).toUpperCase();
-            document.getElementById('generatedCode').textContent = code;
-            
-            document.getElementById('verificationSection').classList.add('hidden');
-            document.getElementById('resultSection').classList.remove('hidden');
-            
-            sendCodeToEndpoint(code);
-        }
-
-        // Send code to HTTP endpoint
-        async function sendCodeToEndpoint(code) {
-            const endpoint = document.getElementById('apiEndpoint').value;
-            
-            try {
-                const response = await fetch(endpoint, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                        code: code,
-                        timestamp: new Date().toISOString()
-                    })
-                });
-
-                if (response.ok) {
-                    showToast('Code sent successfully!', 'success');
-                } else {
-                    showToast('Failed to send code to endpoint', 'error');
-                }
-            } catch (error) {
-                showToast('Error connecting to endpoint', 'error');
-                console.error('Error:', error);
-            }
-        }
-
-        // Reset verification
-        function resetVerification() {
-            document.getElementById('verificationSection').classList.remove('hidden');
-            document.getElementById('resultSection').classList.add('hidden');
-            generateCaptcha();
-        }
-
-        // Allow Enter key to submit
-        document.getElementById('answerInput').addEventListener('keypress', function(e) {
-            if (e.key === 'Enter') {
-                verifyAnswer();
-            }
-        });
-
-        // Initialize on load
+    function resetVerification() {
+        document.getElementById('verificationSection').classList.remove('hidden');
+        document.getElementById('resultSection').classList.add('hidden');
         generateCaptcha();
-    </script>
+    }
+
+    function showToast(message, type) {
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.textContent = message;
+        document.body.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+
+    document.getElementById('answerInput').addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') verifyAnswer();
+    });
+
+    generateCaptcha();
+</script>
+
 </body>
 </html>
